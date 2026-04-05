@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>위험성평가 법적근거 분석기</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Malgun Gothic', sans-serif; background: #f0f2f5; min-height: 100vh; }
+  .header { background: #1B2A4A; color: white; padding: 16px 24px; }
+  .header h1 { font-size: 18px; font-weight: 700; }
+  .header p { font-size: 12px; color: #8899BB; margin-top: 4px; }
+  .container { max-width: 900px; margin: 24px auto; padding: 0 16px; }
+  .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+  .card-title { font-size: 14px; font-weight: 700; color: #1B2A4A; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #E8652A; display: inline-block; }
+  .form-group { margin-bottom: 14px; }
+  label { font-size: 12px; font-weight: 600; color: #445566; margin-bottom: 6px; display: block; }
+  select, textarea, input { width: 100%; border: 1px solid #dde; border-radius: 6px; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #1B2A4A; background: #fafbfc; }
+  select:focus, textarea:focus { outline: none; border-color: #1B2A4A; background: white; }
+  textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .btn-analyze { width: 100%; background: #1B2A4A; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .btn-analyze:active { background: #E8652A; }
+  .btn-analyze:disabled { background: #aaa; cursor: not-allowed; }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 700; margin-left: 6px; }
+  .badge-red { background: #FFE8E8; color: #CC0000; }
+  .badge-orange { background: #FFF0E0; color: #CC6600; }
+  .tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .tag { font-size: 11px; background: #E8ECF2; color: #445566; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
+  .tag:active { background: #1B2A4A; color: white; }
+  .hint { font-size: 11px; color: #8899AA; margin-top: 6px; }
+
+  /* 모달 */
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+  .modal-overlay.active { display: flex; align-items: flex-end; }
+  .modal-sheet { background: white; width: 100%; max-height: 88vh; border-radius: 16px 16px 0 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
+  .modal-header { position: sticky; top: 0; background: white; padding: 16px 20px 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+  .modal-title { font-size: 15px; font-weight: 700; color: #1B2A4A; }
+  .modal-close { background: #f0f2f5; border: none; border-radius: 20px; padding: 6px 16px; font-size: 13px; font-weight: 600; color: #445566; cursor: pointer; font-family: inherit; }
+  .modal-body { padding: 16px 20px; }
+
+  .loading { text-align: center; padding: 40px 20px; color: #8899AA; font-size: 14px; }
+  .loading span { display: inline-block; animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .result-label { font-size: 11px; color: #8899AA; font-weight: 600; margin-bottom: 12px; background: #F4F6F9; padding: 8px 12px; border-radius: 6px; }
+  .legal-item { background: #fafbfc; border-radius: 8px; padding: 14px; margin-bottom: 10px; border: 1px solid #E8ECF2; }
+  .legal-law { font-size: 13px; font-weight: 700; color: #1B2A4A; }
+  .legal-title { font-size: 12px; color: #E8652A; font-weight: 600; margin: 4px 0 6px; }
+  .legal-desc { font-size: 12px; color: #556677; line-height: 1.6; }
+  .legal-copy-btn { margin-top: 8px; font-size: 11px; background: #F0F4FF; color: #1B2A4A; border: 1px solid #C0CCDD; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-family: inherit; }
+  .legal-copy-btn:active { background: #1B2A4A; color: white; }
+  .copy-all-btn { width: 100%; margin-top: 16px; background: #E8652A; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .copy-all-btn:active { background: #c8552a; }
+  .error-box { background: #FFF0F0; border: 1px solid #FFCCCC; border-radius: 8px; padding: 16px; color: #CC0000; font-size: 13px; line-height: 1.8; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚖️ 위험성평가 법적근거 자동 분석기</h1>
+  <p>위험발생 상황을 입력하면 AI가 관련 산업안전보건법·안전보건규칙 조항을 자동으로 분석합니다</p>
+</div>
+
+<div class="container">
+  <div class="card">
+    <div class="card-title">위험 상황 입력</div>
+    <div class="row2">
+      <div class="form-group">
+        <label>위험 분류</label>
+        <select id="riskType">
+          <option value="">-- 선택 --</option>
+          <option value="떨어짐">떨어짐 (추락)</option>
+          <option value="넘어짐">넘어짐 (전도)</option>
+          <option value="부딪힘">부딪힘 (충돌)</option>
+          <option value="끼임">끼임 (협착)</option>
+          <option value="맞음">맞음 (낙하·비래)</option>
+          <option value="무너짐">무너짐 (붕괴·도괴)</option>
+          <option value="감전">감전</option>
+          <option value="베임">베임·찔림</option>
+          <option value="깔림">깔림·뒤집힘</option>
+          <option value="화재폭발">화재·폭발</option>
+          <option value="밀폐공간">밀폐공간</option>
+          <option value="근골격계질환">근골격계질환</option>
+          <option value="소음">소음</option>
+          <option value="유해물질">유해물질</option>
+          <option value="화학물질">화학물질</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>세부 작업내용</label>
+        <input type="text" id="workContent" placeholder="예: 비계 설치/해체, 용접..." />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>위험발생 상황 및 결과</label>
+      <textarea id="hazardDesc" placeholder="위험발생 상황을 상세히 입력하세요.
+
+예) 비계 해체 중 안전고리 미체결로 추락 위험"></textarea>
+      <div class="hint">※ 빠른 입력 예시:</div>
+      <div class="tag-row">
+        <span class="tag" onclick="setExample('비계 설치 중 안전고리 미체결로 추락 위험')">추락 예시</span>
+        <span class="tag" onclick="setExample('자재 운반 중 바닥 미끄러짐으로 넘어짐 위험')">전도 예시</span>
+        <span class="tag" onclick="setExample('피복이 노출된 릴선 사용 중 감전 위험')">감전 예시</span>
+        <span class="tag" onclick="setExample('밀폐공간 내 산소 결핍으로 인한 질식 위험')">밀폐 예시</span>
+        <span class="tag" onclick="setExample('고소작업 중 공구 낙하로 하부 작업자 맞음 위험')">낙하 예시</span>
+        <span class="tag" onclick="setExample('용접 작업 중 불꽃 비산으로 화재 위험')">화재 예시</span>
+      </div>
+    </div>
+    <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">⚖️ 법적근거 자동 분석</button>
+  </div>
+</div>
+
+<!-- 결과 모달 (바텀시트) -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal-sheet" id="modalSheet">
+    <div class="modal-header">
+      <span class="modal-title">⚖️ 분석 결과 — 법적근거</span>
+      <button class="modal-close" onclick="closeModal()">✕ 닫기</button>
+    </div>
+    <div class="modal-body">
+      <div id="resultContent"></div>
+      <button class="copy-all-btn" onclick="copyAll()" id="copyAllBtn" style="display:none;">📋 전체 법적근거 복사 (위험성평가표용)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_KEY = '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';
+let lastResults = [];
+
+function setExample(text) {
+  document.getElementById('hazardDesc').value = text;
+}
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+async function analyze() {
+  const riskType = document.getElementById('riskType').value;
+  const workContent = document.getElementById('workContent').value.trim();
+  const hazardDesc = document.getElementById('hazardDesc').value.trim();
+
+  if (!hazardDesc) { alert('위험발생 상황을 입력해주세요.'); return; }
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 분석 중...';
+
+  document.getElementById('resultContent').innerHTML = '<div class="loading"><span>⚖️ 산업안전보건법 조항 분석 중...</span></div>';
+  document.getElementById('copyAllBtn').style.display = 'none';
+  openModal();
+
+  const prompt = `당신은 산업안전보건법 전문가입니다. 아래 위험발생 상황을 분석하여 관련된 법적근거를 JSON으로 반환하세요.
+
+위험 분류: ${riskType || '미지정'}
+세부 작업: ${workContent || '미지정'}
+위험발생 상황: ${hazardDesc}
+
+관련 법령 범위:
+- 산업안전보건법 (제1조~제243조)
+- 산업안전보건기준에 관한 규칙 (안전보건규칙)
+- 산업안전보건법 시행규칙
+
+출력 형식 (순수 JSON, 마크다운 없이):
+{"laws":[{"law":"법령명 조항번호","title":"조항 제목","relevance":"높음|중간","desc":"이 조항과의 연관성 설명 1~2줄"}]}
+
+규칙:
+- 가장 관련성 높은 조항 3~5개만 선정
+- law 필드 형식: "산업안전보건기준에 관한 규칙 제3조" 또는 "산업안전보건법 제38조"
+- relevance는 직접 관련이면 "높음", 간접 관련이면 "중간"
+- JSON 외 다른 텍스트 출력 금지`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error('API 오류 ' + res.status + ': ' + (err.error && err.error.message ? err.error.message : res.statusText));
+    }
+
+    const data = await res.json();
+    const raw = data.content[0].text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    const parsed = JSON.parse(raw);
+    renderResult(parsed.laws, hazardDesc);
+    lastResults = parsed.laws;
+    document.getElementById('copyAllBtn').style.display = 'block';
+
+  } catch(e) {
+    document.getElementById('resultContent').innerHTML =
+      '<div class="error-box">❌ <strong>오류가 발생했습니다</strong><br><br>' +
+      e.message + '<br><br>' +
+      '• API 키를 확인해주세요<br>' +
+      '• 인터넷 연결을 확인해주세요<br>' +
+      '• 잠시 후 다시 시도해주세요</div>';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '⚖️ 법적근거 자동 분석';
+}
+
+function renderResult(laws, hazard) {
+  const html = laws.map(function(law) {
+    const badge = law.relevance === '높음'
+      ? '<span class="badge badge-red">직접 관련</span>'
+      : '<span class="badge badge-orange">간접 관련</span>';
+    const copyText = law.law + ' [' + law.title + ']';
+    return '<div class="legal-item">' +
+      '<div><span class="legal-law">' + law.law + '</span>' + badge + '</div>' +
+      '<div class="legal-title">[' + law.title + ']</div>' +
+      '<div class="legal-desc">' + law.desc + '</div>' +
+      '<button class="legal-copy-btn" onclick="copyOne(\'' + copyText.replace(/'/g, "\\'") + '\')">📋 이 조항 복사</button>' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('resultContent').innerHTML =
+    '<div class="result-label">📋 위험 상황: ' + hazard.substring(0,50) + (hazard.length>50?'...':'') + '</div>' + html;
+}
+
+function copyOne(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() { alert('복사됐습니다!'); }).catch(function() { fallbackCopy(text); });
+  } else { fallbackCopy(text); }
+}
+
+function copyAll() {
+  if (!lastResults.length) return;
+  const text = lastResults.map(function(l) { return l.law + ' [' + l.title + ']'; }).join('\n');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      alert('전체 법적근거가 복사됐습니다!\n위험성평가표 법적근거 칸에 붙여넣기 하세요.');
+    }).catch(function() { fallbackCopy(text); });
+  } else { fallbackCopy(text); }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); alert('복사됐습니다!'); }
+  catch(e) { alert('복사 실패. 직접 선택해서 복사해주세요.'); }
+  document.body.removeChild(ta);
+}
+</script>
+</body>
+</html>
